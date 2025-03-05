@@ -1,8 +1,9 @@
-import fastify from "fastify";
+import { app } from './app'
 
-const app = fastify()
-
-app.listen({ port: 3333 }).then(() => {
-    console.log('aqui ta rodando...');
-    
-})
+app
+  .listen({ 
+    port: 3333
+  })
+ .then(() => {
+    console.log('rodando...')
+  })
