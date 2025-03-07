@@ -12,6 +12,21 @@ export async function usersRoutes(app: FastifyInstance) {
     return { users }
   })
 
+  app.get('/:id', { preHandler: [checkSessionIdExists] }, async (req) => {
+    const createUserParamSchema = z.object({
+      id: z.string().uuid(),
+    })
+    const { sessionId } = req.cookies
+    const { id } = createUserParamSchema.parse(req.params)
+
+    const user = await knex('users').where({
+      session_id: sessionId,
+      id,
+    })
+
+    return { user }
+  })
+
   app.post('/', async (req, res) => {
     const createUserBodySchema = z.object({
       name: z.string(),
@@ -34,7 +49,36 @@ export async function usersRoutes(app: FastifyInstance) {
       id: randomUUID(),
       name,
       session_id: sessionId,
+      diets: null,
     })
+
+    return res.status(201).send()
+  })
+
+  app.post('/:id/meals', async (req, res) => {
+    const createUserParamsSchema = z.object({
+      id: z.string().uuid(),
+    })
+
+    const createMealBodySchema = z.object({
+      name: z.string(),
+      description: z.string(),
+      inTheDiet: z.boolean(),
+    })
+
+    const { id } = createUserParamsSchema.parse(req.params)
+    const { name, description, inTheDiet } = createMealBodySchema.parse(
+      req.body,
+    )
+
+    if (id) {
+      await knex('users').where('id', id).insert({
+        id: randomUUID(),
+        name,
+        description,
+        inTheDiet,
+      })
+    }
 
     return res.status(201).send()
   })
