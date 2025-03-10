@@ -10,6 +10,18 @@ export async function usersRoutes(app: FastifyInstance) {
     return { users }
   })
 
+  app.get('/:id', async (req) => {
+    const createUserParamsSchema = z.object({
+      id: z.string(),
+    })
+
+    const { id } = createUserParamsSchema.parse(req.params)
+
+    const user = await knex('users').where('id', id).select()
+
+    return user
+  })
+
   app.post('/', async (req, res) => {
     const createUserBodySchema = z.object({
       name: z.string(),
