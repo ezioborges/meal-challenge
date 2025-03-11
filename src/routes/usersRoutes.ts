@@ -4,6 +4,18 @@ import { knex } from '../database'
 import { randomUUID } from 'node:crypto'
 import { checkSessionIdExists } from '../middlewares/check-session-id-exists'
 
+type mealType = {
+  title: string
+  description: string
+  inTheDiet: boolean
+}
+
+type responseType = {
+  userId: string
+  userName: string
+  userMeals: object[]
+}
+
 export async function usersRoutes(app: FastifyInstance) {
   app.get('/', { preHandler: [checkSessionIdExists] }, async (req) => {
     const { sessionId } = req.cookies
@@ -131,5 +143,34 @@ export async function usersRoutes(app: FastifyInstance) {
     await knex('meals').where('id', mealId).delete()
 
     res.status(200).send()
+  })
+
+  // Lista todas as refeições de um usuário
+  app.get('/:id/all-meals', async (req) => {
+    const createUserMealsParamsSchema = z.object({
+      id: z.string(),
+    })
+
+    const { id } = createUserMealsParamsSchema.parse(req.params)
+    const [user] = await knex('users').where('id', id).select()
+
+    const response: responseType = {
+      userId: user.id,
+      userName: user.name,
+      userMeals: [],
+    }
+
+    const userMealList = await knex('users')
+      .innerJoin('meals', 'meals.user_id', 'users.id')
+      .select()
+
+    userMealList.forEach(({ title, description, inTheDiet }: mealType) => {
+      return response.userMeals.push({
+        title,
+        description,
+        inTheDiet,
+      })
+    })
+    return response
   })
 }
