@@ -85,4 +85,39 @@ export async function usersRoutes(app: FastifyInstance) {
 
     return res.status(201).send()
   })
+
+  app.put('/:id/meals/:mealId', async (req, res) => {
+    const createUserAndMealParamsSchema = z.object({
+      id: z.string(),
+      mealId: z.string(),
+    })
+
+    const createMealBodySchema = z.object({
+      title: z.string(),
+      description: z.string(),
+      inTheDiet: z.boolean(),
+    })
+
+    const paramsID = req.params
+    const { id, mealId } = createUserAndMealParamsSchema.parse(paramsID)
+    const { title, description, inTheDiet } = createMealBodySchema.parse(
+      req.body,
+    )
+    const meals = await knex('meals').select()
+
+    const mealsId = meals.filter((meal) => meal.user_id === id)
+    const mealItem = mealsId.filter((item) => item.id === mealId)
+
+    if (mealItem) {
+      await knex('meals').where('id', mealId).update({
+        title,
+        description,
+        inTheDiet,
+      })
+
+      return res.status(200).send()
+    }
+
+    return res.status(404).send()
+  })
 }
