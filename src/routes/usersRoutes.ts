@@ -25,6 +25,12 @@ export async function usersRoutes(app: FastifyInstance) {
     return user
   })
 
+  app.get('/meals', async () => {
+    const meals = await knex('meals').select()
+
+    return { meals }
+  })
+
   app.post('/', async (req, res) => {
     const createUserBodySchema = z.object({
       name: z.string(),
@@ -47,6 +53,34 @@ export async function usersRoutes(app: FastifyInstance) {
       id: randomUUID(),
       name,
       session_id: sessionId,
+    })
+
+    return res.status(201).send()
+  })
+
+  app.post('/:id/meals', async (req, res) => {
+    const createMealBodySchema = z.object({
+      title: z.string(),
+      description: z.string(),
+      inTheDiet: z.boolean(),
+    })
+
+    const createMealParamSchema = z.object({
+      id: z.string(),
+    })
+
+    const { title, description, inTheDiet } = createMealBodySchema.parse(
+      req.body,
+    )
+
+    const { id } = createMealParamSchema.parse(req.params)
+
+    await knex('meals').insert({
+      id: randomUUID(),
+      title,
+      description,
+      inTheDiet,
+      user_id: id,
     })
 
     return res.status(201).send()
