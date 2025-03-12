@@ -17,6 +17,7 @@ type responseType = {
 }
 
 export async function usersRoutes(app: FastifyInstance) {
+  // Rota que retorna todos os usuários
   app.get('/', { preHandler: [checkSessionIdExists] }, async (req) => {
     const { sessionId } = req.cookies
 
@@ -25,7 +26,8 @@ export async function usersRoutes(app: FastifyInstance) {
     return { users }
   })
 
-  app.get('/:id', async (req) => {
+  // Rota que busca usuários pelo id
+  app.get('/:id', { preHandler: [checkSessionIdExists] }, async (req) => {
     const createUserParamsSchema = z.object({
       id: z.string(),
     })
@@ -37,12 +39,27 @@ export async function usersRoutes(app: FastifyInstance) {
     return user
   })
 
+  // Rota que retorna todas as refeições
   app.get('/meals', async () => {
     const meals = await knex('meals').select()
 
     return { meals }
   })
 
+  // Rota para retornar uma refeição especifica
+  app.get('/meals/:id', async (req) => {
+    const createMealParamsSchema = z.object({
+      id: z.string(),
+    })
+
+    const { id } = createMealParamsSchema.parse(req.params)
+
+    const meal = await knex('meals').where('id', id).select()
+
+    return meal
+  })
+
+  // Rota para criar usuários
   app.post('/', async (req, res) => {
     const createUserBodySchema = z.object({
       name: z.string(),
@@ -70,6 +87,7 @@ export async function usersRoutes(app: FastifyInstance) {
     return res.status(201).send()
   })
 
+  // Rota para criar um refeição
   app.post('/:id/meals', async (req, res) => {
     const createMealBodySchema = z.object({
       title: z.string(),
@@ -98,6 +116,7 @@ export async function usersRoutes(app: FastifyInstance) {
     return res.status(201).send()
   })
 
+  // Rota para atualizar uma refeição
   app.put('/:id/meals/:mealId', async (req, res) => {
     const createUserAndMealParamsSchema = z.object({
       id: z.string(),
@@ -133,6 +152,7 @@ export async function usersRoutes(app: FastifyInstance) {
     return res.status(404).send()
   })
 
+  // Rota para deletar uma refeição
   app.delete('/:id/meals/:mealId', async (req, res) => {
     const createMealParamSchema = z.object({
       mealId: z.string(),
